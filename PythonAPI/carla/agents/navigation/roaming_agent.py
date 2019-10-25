@@ -10,7 +10,7 @@
 The agent also responds to traffic lights. """
 
 from agents.navigation.agent import Agent, AgentState
-from agents.navigation.local_planner import LocalPlanner
+from agents.navigation.local_planner import LocalPlanner, VariableSpeedLocalPlanner
 
 
 class RoamingAgent(Agent):

@@ -139,7 +139,7 @@ class LocalPlanner(object):
 
         self._target_road_option = RoadOption.LANEFOLLOW
         # fill waypoint trajectory queue
-        self._compute_next_waypoints(k=200)
+        self._compute_next_waypoints(k=20)
 
     def set_speed(self, speed):
         """
@@ -162,22 +162,27 @@ class LocalPlanner(object):
         k = min(available_entries, k)
 
         for _ in range(k):
-            last_waypoint = self._waypoints_queue[-1][0]
+            try:
+                last_waypoint = self._waypoints_queue[-1][0]
+            except IndexError as err:
+                break
             next_waypoints = list(last_waypoint.next(self._sampling_radius))
-
+            next_waypoint = None
             if len(next_waypoints) == 1:
                 # only one option available ==> lanefollowing
                 next_waypoint = next_waypoints[0]
                 road_option = RoadOption.LANEFOLLOW
-            else:
+            elif len(next_waypoints) > 1:
                 # random choice between the possible options
                 road_options_list = _retrieve_options(
                     next_waypoints, last_waypoint)
                 road_option = random.choice(road_options_list)
                 next_waypoint = next_waypoints[road_options_list.index(
                     road_option)]
-
-            self._waypoints_queue.append((next_waypoint, road_option))
+            if next_waypoint:
+                self._waypoints_queue.append((next_waypoint, road_option))
+            else:
+                break
 
     def set_global_plan(self, current_plan):
         self._waypoints_queue.clear()
@@ -197,7 +202,7 @@ class LocalPlanner(object):
 
         # not enough waypoints in the horizon? => add more!
         if not self._global_plan and len(self._waypoints_queue) < int(self._waypoints_queue.maxlen * 0.5):
-            self._compute_next_waypoints(k=100)
+            self._compute_next_waypoints(k=20)
 
         if len(self._waypoints_queue) == 0:
             control = carla.VehicleControl()
@@ -241,6 +246,18 @@ class LocalPlanner(object):
             draw_waypoints(self._vehicle.get_world(), [self.target_waypoint], self._vehicle.get_location().z + 1.0)
 
         return control
+
+class VariableSpeedLocalPlanner(LocalPlanner):
+    def set_speed(self, speed):
+        """
+        Request new target speed.
+
+        :param speed: new target speed in Km/h;
+        :return:
+        """
+        if speed != self._target_speed:
+            self._waypoints_queue = deque(maxlen=100)
+            self._init_controller({'target_speed': speed,'lateral_control_dict': {'K_P': 1.0, 'K_D': 0.01, 'K_I': 0.0, 'dt': 0.05}})
 
 
 def _retrieve_options(list_waypoints, current_waypoint):
