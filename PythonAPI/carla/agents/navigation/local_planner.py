@@ -247,18 +247,16 @@ class LocalPlanner(object):
 
         return control
 
+    def reset(self):
+        self._waypoint_buffer = deque(maxlen=self._buffer_size)
+        self._waypoints_queue = deque(maxlen=100)
+        self._init_controller({'target_speed': self._target_speed,'lateral_control_dict': {'K_P': 1.0, 'K_D': 0.01, 'K_I': 0.0, 'dt': 0.05}})
+
 class VariableSpeedLocalPlanner(LocalPlanner):
     def set_speed(self, speed):
-        """
-        Request new target speed.
-
-        :param speed: new target speed in Km/h;
-        :return:
-        """
         if speed != self._target_speed:
-            self._waypoints_queue = deque(maxlen=100)
-            self._init_controller({'target_speed': speed,'lateral_control_dict': {'K_P': 1.0, 'K_D': 0.01, 'K_I': 0.0, 'dt': 0.05}})
-
+            self._target_speed = speed
+            self.reset()
 
 def _retrieve_options(list_waypoints, current_waypoint):
     """
