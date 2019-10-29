@@ -88,7 +88,6 @@ class LocalPlanner(object):
 
     def reset_vehicle(self):
         self._vehicle = None
-        print("Resetting ego-vehicle!")
 
     def _init_controller(self, opt_dict):
         """
@@ -134,12 +133,16 @@ class LocalPlanner(object):
 
         self._global_plan = False
 
-        # compute initial waypoints
-        self._waypoints_queue.append((self._current_waypoint.next(self._sampling_radius)[0], RoadOption.LANEFOLLOW))
+        try:
+            # compute initial waypoints
+            self._waypoints_queue.append((self._current_waypoint.next(self._sampling_radius)[0], RoadOption.LANEFOLLOW))
 
-        self._target_road_option = RoadOption.LANEFOLLOW
-        # fill waypoint trajectory queue
-        self._compute_next_waypoints(k=20)
+            self._target_road_option = RoadOption.LANEFOLLOW
+            # fill waypoint trajectory queue
+            self._compute_next_waypoints(k=20)
+        except:
+            # No waypoints can be calculated
+            pass
 
     def set_speed(self, speed):
         """
