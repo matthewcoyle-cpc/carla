@@ -125,7 +125,7 @@ class LocalPlanner(object):
                 args_lateral_dict = opt_dict['lateral_control_dict']
             if 'longitudinal_control_dict' in opt_dict:
                 args_longitudinal_dict = opt_dict['longitudinal_control_dict']
-
+        if self._vehicle:
         self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())
         self._vehicle_controller = VehiclePIDController(self._vehicle,
                                                        args_lateral=args_lateral_dict,
@@ -207,7 +207,7 @@ class LocalPlanner(object):
         if not self._global_plan and len(self._waypoints_queue) < int(self._waypoints_queue.maxlen * 0.5):
             self._compute_next_waypoints(k=20)
 
-        if len(self._waypoints_queue) == 0:
+        if len(self._waypoints_queue) == 0 or not self._vehicle:
             control = carla.VehicleControl()
             control.steer = 0.0
             control.throttle = 0.0
